@@ -42,35 +42,25 @@ async def handler(event):
     username = user.username or f"id{user.id}"
     print(f"🕵️ Checking @{username}...")
 
-    async def send_warning():
-        links_text = "\n".join(
-            f"👉 [{chan['label']}]({chan['link']})" for chan in channels
-        )
-        await client.send_message(
-            event.chat_id,
-            f"👋 Welcome @{username}!\n\n"
-            f"⚠️ To stay in this group, you must join both official channels below.\n"
-            f"⏳ You have 2 minutes to complete this or you will be removed.\n\n"
-            f"{links_text}",
-            link_preview=False,
-            parse_mode="md"
-        )
+    links_text = "\n".join(
+        f"👉 [{chan['label']}]({chan['link']})" for chan in channels
+    )
+    await client.send_message(
+        event.chat_id,
+        f"👋 Welcome @{username}!\n\n"
+        f"⚠️ To stay in this group, you must join both official channels below.\n"
+        f"⏳ You have 2 minutes to complete this or you will be removed.\n\n"
+        f"{links_text}",
+        link_preview=False,
+        parse_mode="md"
+    )
 
-    # First warning
-    await send_warning()
-    await asyncio.sleep(60)
+    await asyncio.sleep(120)
 
-    # First check
     still_missing = [chan["username"] for chan in channels if not await is_user_following(client, chan, user.id)]
     if still_missing:
-        await send_warning()
-        await asyncio.sleep(60)
-
-    # Final check
-    still_missing_final = [chan["username"] for chan in channels if not await is_user_following(client, chan, user.id)]
-    if still_missing_final:
         await client.kick_participant(event.chat_id, user.id)
-        print(f"❌ @{username} removed for not joining: {still_missing_final}")
+        print(f"❌ @{username} removed for not joining: {still_missing}")
     else:
         print(f"✅ @{username} passed all channel checks.")
 
